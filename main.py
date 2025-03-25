@@ -125,37 +125,41 @@ class MyPlugin(Star):
         async for result in self._send_neko_image(event):
             yield result
     
-    async def _send_neko_image(self, event: AstrMessageEvent):
+async def _send_neko_image(self, event: AstrMessageEvent):
+    try:
+        image_path = self.downloader.fetch_image()
+        
+        if not image_path:
+            yield event.plain_result("获取图片失败，请稍后再试。")
+            return
+        
+        # 严格校验文件存在性
+        if not os.path.exists(image_path):
+            logger.error(f"图片文件不存在: {image_path}")
+            yield event.plain_result("图片文件丢失，请稍后再试。")
+            return
+            
+        # 发送图片（将 Image 对象包装在列表中）
         try:
-            image_path = self.downloader.fetch_image()
-            
-            if not image_path:
-                yield event.plain_result("获取图片失败，请稍后再试。")
-                return
-            
-            if not os.path.exists(image_path):
-                yield event.plain_result("图片文件丢失，请稍后再试。")
-                return
-                
-            try:
-                result = event.chain_result(Comp.Image.fromFileSystem(image_path))
-                yield result
-                logger.info(f"成功发送图片: {image_path}")
-            except Exception as e:
-                logger.error(f"发送图片失败: {str(e)}")
-                yield event.plain_result(f"发送图片失败: {str(e)}")
-                return
-            
-            try:
-                os.remove(image_path)
-                logger.info(f"成功删除图片: {image_path}")
-            except Exception as e:
-                logger.error(f"删除图片失败: {str(e)}")
-                yield event.plain_result("图片已发送，但清理失败。")
-                
+            result = event.chain_result([Comp.Image.fromFileSystem(image_path)])
+            yield result
+            logger.info(f"成功发送图片: {image_path}")
         except Exception as e:
-            logger.error(f"处理图片请求时发生错误: {str(e)}")
-            yield event.plain_result(f"处理请求时发生错误: {str(e)}")
+            logger.error(f"发送图片失败: {str(e)}")
+            yield event.plain_result(f"发送图片失败: {str(e)}")
+            return
+        
+        # 删除图片文件
+        try:
+            os.remove(image_path)
+            logger.info(f"成功删除图片: {image_path}")
+        except Exception as e:
+            logger.error(f"删除图片失败: {str(e)}")
+            yield event.plain_result("图片已发送，但清理失败。")
+            
+    except Exception as e:
+        logger.error(f"处理图片请求时发生错误: {str(e)}")
+        yield event.plain_result(f"处理请求时发生错误: {str(e)}")
             
     async def terminate(self):
         try:
