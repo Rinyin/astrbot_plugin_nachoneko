@@ -153,7 +153,7 @@ class MyPlugin(Star):
     @filter.command("neko")
     async def neko(self, event: AstrMessageEvent):
         yield event.plain_result("喵喵喵~")
-        yield await self._send_neko_image(event)
+        return await self._send_neko_image(event)
     
     async def _send_neko_image(self, event: AstrMessageEvent):
         """处理猫猫图片的获取、发送和清理"""
