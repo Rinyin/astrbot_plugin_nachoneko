@@ -122,9 +122,10 @@ class MyPlugin(Star):
     @filter.command("neko")
     async def neko(self, event: AstrMessageEvent):
         yield event.plain_result("喵喵喵~")
-        async for result in self._send_neko_image(event):
+        async for result in self._send_neko_image(event):  # 确保方法调用正确
             yield result
     
+    # 确保方法正确定义在类内部，且为异步方法
 async def _send_neko_image(self, event: AstrMessageEvent):
     try:
         image_path = self.downloader.fetch_image()
@@ -157,7 +158,7 @@ async def _send_neko_image(self, event: AstrMessageEvent):
             logger.error(f"删除图片失败: {str(e)}")
             yield event.plain_result("图片已发送，但清理失败。")
             
-    except Exception as e:
+    except Exception as e:  # 添加外层 try 对应的 except
         logger.error(f"处理图片请求时发生错误: {str(e)}")
         yield event.plain_result(f"处理请求时发生错误: {str(e)}")
             
