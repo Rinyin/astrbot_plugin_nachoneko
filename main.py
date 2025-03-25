@@ -51,7 +51,7 @@ class ImageDownloader:
     def fetch_image(self):
         """
         执行完整的图片获取流程
-        :yield: 成功返回图片路径，失败返回None
+        :return: 成功返回图片路径，失败返回None
         """
         api_url = 'https://xiaobapi.top/api/xb/api/gcmm.php'
         params = {'type': 1}
@@ -67,7 +67,7 @@ class ImageDownloader:
                 self.logger.error(
                     f"无效内容类型：{content_type} | URL：{response.url}"
                 )
-                yield None
+                return None
 
             # 生成带时间戳的唯一文件名
             timestamp = datetime.now().strftime("%Y%m%d%H%M%S%f")
@@ -79,7 +79,7 @@ class ImageDownloader:
                 f.write(response.content)
 
             self.logger.info(f"图片保存成功：{save_path}")
-            yield save_path
+            return save_path
 
         except requests.exceptions.RequestException as e:
             self.logger.error(
@@ -96,7 +96,7 @@ class ImageDownloader:
                 f"未处理的异常：{str(e)}",
                 exc_info=True
             )
-        yield None
+        return None
 
     def _parse_extension(self, content_type):
         """解析内容类型获取扩展名"""
@@ -105,13 +105,13 @@ class ImageDownloader:
             'image/png': 'png',
             'image/gif': 'gif'
         }
-        yield type_map.get(content_type.split(';')[0].strip(), 'jpg')
+        return type_map.get(content_type.split(';')[0].strip(), 'jpg')
         
     def get_all_images(self):
         """获取所有图片文件列表"""
         try:
             if not os.path.exists(self.save_folder):
-                yield []
+                return []
                 
             # 获取图片文件夹中的所有文件
             files = os.listdir(self.save_folder)
@@ -122,10 +122,10 @@ class ImageDownloader:
                 for f in files 
                 if os.path.splitext(f)[1].lower() in image_extensions
             ]
-            yield image_files
+            return image_files
         except Exception as e:
             self.logger.error(f"获取图片列表失败: {str(e)}")
-            yield []
+            return []
             
     def cleanup_images(self):
         """清理所有图片文件"""
@@ -141,7 +141,7 @@ class ImageDownloader:
                 self.logger.error(f"清理图片失败: {image_path}, 错误: {str(e)}")
                 failed_count += 1
                 
-        yield success_count, failed_count
+        return success_count, failed_count
 
 @register("nachoneko", "Rinyin", "随机甘城猫猫图片", "1.0.0")
 class MyPlugin(Star):
@@ -153,7 +153,8 @@ class MyPlugin(Star):
     @filter.command("neko")
     async def neko(self, event: AstrMessageEvent):
         yield event.plain_result("喵喵喵~")
-        await self._send_neko_image(event)
+        async for result in self._send_neko_image(event):
+            yield result
     
     async def _send_neko_image(self, event: AstrMessageEvent):
         """处理猫猫图片的获取、发送和清理"""
@@ -163,10 +164,12 @@ class MyPlugin(Star):
             
             if not image_path:
                 yield event.plain_result("获取图片失败，请稍后再试。")
+                return
             
             # 检查文件是否存在
             if not os.path.exists(image_path):
                 yield event.plain_result("图片文件丢失，请稍后再试。")
+                return
                 
             # 发送图片
             try:
@@ -176,6 +179,7 @@ class MyPlugin(Star):
             except Exception as e:
                 logger.error(f"发送图片失败: {str(e)}")
                 yield event.plain_result(f"发送图片失败: {str(e)}")
+                return
             
             # 删除图片文件
             try:
@@ -193,7 +197,7 @@ class MyPlugin(Star):
         """插件卸载时清理资源"""
         try:
             # 清理所有剩余图片
-            success_count, failed_count = self.downloader.cleanup_images()
-            logger.info(f"插件卸载时清理图片：成功 {success_count} 个，失败 {failed_count} 个")
+            for success_count, failed_count in [self.downloader.cleanup_images()]:
+                logger.info(f"插件卸载时清理图片：成功 {success_count} 个，失败 {failed_count} 个")
         except Exception as e:
             logger.error(f"插件卸载时清理资源失败: {str(e)}")
