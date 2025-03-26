@@ -6,7 +6,7 @@
 使用/neko指令获取图片
 # 注意事项
 * 该插件使用前需先安装requests库，可在控制台或cmd安装
-* 该插件通过小冰API获取图片，可能存在获取到的图片并非甘城猫猫的情况
+* 该插件通过素颜API获取图片
 * 本插件仅在aiocqhttp进行过测试，系统为Windows，其他平台或系统可能出现未知错误
 # 帮助
 * 图片保存路径为AstrBot\downloaded_images

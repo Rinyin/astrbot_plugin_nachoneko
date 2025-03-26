@@ -6,10 +6,6 @@ import os
 import logging
 import requests
 from datetime import datetime
-import urllib3
-
-# 禁用SSL证书警告
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 class ImageDownloader:
     _log_configured = False  # 类级日志配置标记
@@ -57,12 +53,11 @@ class ImageDownloader:
         执行完整的图片获取流程
         :return: 成功返回图片路径，失败返回None
         """
-        api_url = 'https://xiaobapi.top/api/xb/api/gcmm.php'
-        params = {'type': 1}
+        api_url = 'https://api.suyanw.cn/api/mao'
 
         try:
             # 添加 verify=False 绕过SSL验证
-            response = requests.get(api_url, params=params, timeout=15, verify=False)
+            response = requests.get(api_url, timeout=15, verify=False)
             response.raise_for_status()
 
             # 验证内容类型
@@ -141,7 +136,7 @@ class ImageDownloader:
                 
         return success_count, failed_count
 
-@register("nachoneko", "Rinyin", "随机甘城猫猫图片", "1.0.0")
+@register("nachoneko", "Rinyin", "随机甘城猫猫图片", "1.0.1")
 class MyPlugin(Star):
     def __init__(self, context: Context):
         super().__init__(context)
