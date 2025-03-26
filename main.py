@@ -56,8 +56,7 @@ class ImageDownloader:
         api_url = 'https://api.suyanw.cn/api/mao'
 
         try:
-            # 添加 verify=False 绕过SSL验证
-            response = requests.get(api_url, timeout=15, verify=False)
+            response = requests.get(api_url, timeout=15)
             response.raise_for_status()
 
             # 验证内容类型
